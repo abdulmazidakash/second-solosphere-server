@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 4000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 
@@ -29,6 +29,49 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+	const jobsCollection = client.db('second-solo-db').collection('jobs');
+
+	//add job post
+	app.post('/add-job' , async(req, res) =>{
+		const jobData = req.body;
+		// console.log(jobData);
+		const result = await jobsCollection.insertOne(jobData);
+		// console.log(result);
+		res.send(result)
+	})
+
+	//get jobs data api
+	app.get('/jobs', async(req, res) =>{
+		const data = req.body;
+		const result = await jobsCollection.find(data).toArray();
+		// console.log(result);
+		res.send(result);
+	})
+
+	//get specific user collection
+	app.get('/jobs/:email', async(req, res) =>{
+		const email = req.params.email;
+		const query = {'buyer.email': email};
+		const result = await jobsCollection.find(query).toArray();
+		res.send(result);
+	})
+
+	//jobs delete api
+	app.delete('/job/:id', async(req, res) =>{
+		const id = req.params.id;
+		const query = { _id: new ObjectId(id)};
+		const result = await jobsCollection.deleteOne(query);
+		res.send(result);
+	})
+
+	//jobs update button api
+	app.get('/job/:id', async(req, res) =>{
+		const id = req.params.id;
+		const query = { _id: new ObjectId(id)};
+		const result = await jobsCollection.findOne(query);
+		res.send(result);
+	})
 
 
 
