@@ -31,6 +31,7 @@ async function run() {
     await client.connect();
 
 	const jobsCollection = client.db('second-solo-db').collection('jobs');
+	const bidsCollection = client.db('second-solo-db').collection('bids');
 
 	//add job post
 	app.post('/add-job' , async(req, res) =>{
@@ -86,6 +87,30 @@ async function run() {
 		res.send(result);
 	})
 
+
+	//save a bid data
+	app.post('/add-bid', async(req, res) =>{
+		const bidData = req.body;
+
+		//
+		const query = {email: bidData.email, job_id: bidData.job_id};
+		const alreadyExist = await bidsCollection.findOne(query);
+
+		console.log('if already exist---->', alreadyExist);
+		if(alreadyExist)
+			return res
+		.status(400)
+		.send('Already bid on this job');
+		const result = await bidsCollection.insertOne(bidData);
+
+		//increase bid count in jobs collection
+		const filter = {_id: new ObjectId(bidData.job_id)};
+		const update = {
+			$inc: {bid_count: 1}
+		}
+		const updateCollection = await jobsCollection.updateOne(filter, update);
+		res.send(result);
+	})
 
 
     // Send a ping to confirm a successful connection
